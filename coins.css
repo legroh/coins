@@ -1,0 +1,29 @@
+body {
+background: green;
+}
+
+.pott {
+ width: 40%; 
+ height: 40%; 
+ background: grey;
+ position: absolute;
+ left: 30%;
+ top: 15%;
+}
+  
+.coin { 
+ width: 80px; 
+ height: 10px; 
+ background: red; 
+ border: 2px dotted black;
+ position: absolute;
+ }
+ 
+.ablage { 
+ width: 20%; 
+ height: 20%;
+ border: 1px solid black;
+ background: aqua;
+ position: absolute;
+ bottom: 10px;
+ }
