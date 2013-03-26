@@ -14,13 +14,12 @@
 
 	var players = 2;
 	var turn = -1;
-	  
+	
 	var nextPlayer = function() {
-		$("#weiter").text("bing");
-		$(".ablage:nth-child("+turn+")").css("border", "");
-		if (++turn >= players) { turn = 0; }
-		//turn = turn++ % leute;
-		$(".ablage:nth-child("+turn+")").css("border", "3px dotted blue");
+		turn += 1;
+		turn %= players;
+		$(".ablage").css("border", "");
+		$(".ablage").eq(turn).css("border", "3px dotted blue");
 	}
 	
 	var initField = function()  { 
