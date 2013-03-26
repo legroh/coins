@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link href="./coins.css" rel="stylesheet" type="text/css"/>
+<script src="./jquery.min.js""></script>
+<script src="./jquery-ui.min.js"></script>
+<!--<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js""></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+-->
+
+<script>
+
+  var players = 2;
+	
+	var initField = function()  { 
+		$(".ablage").each(function(i) {
+			$(this).append( i+1 );
+			$(this).css("left", ((i*25)+2.5)+"%");
+		});
+		$(".ablage:first").css("border", "3px dotted blue");
+		
+		for (var player = 0; player < players; player++) {
+			for (var st = 0; st < 8; st++) {
+				var coin = $('<div/>', { class: 'coin' 
+					, owner: player
+				} );	
+				coin.appendTo("body");
+			}
+		}
+		
+		$(".coin").draggable({revert: 'invalid'});
+		$(".pott").droppable();
+	}
+
+	var paintField = function() {
+		for (var player = 0; player < players; player++) {
+			$(".coin[owner=" + player + "]").each(function(i) {
+				$(this).css("bottom", (i*10 + Math.floor(i/5)*6 +24) + "px");
+				$(this).css("left", (( player )*25+10) + "%");
+			});
+		}	
+	}
+
+	$(document).ready(function() {	
+		initField();
+		paintField();
+	});
+</script>
+
+</head>
+<body>
+
+<div class="pott"></div>
+
+<div class="ablage"></div>
+<div class="ablage"></div>
+<div class="ablage"></div>
+<div class="ablage"></div>
+
+
+
+</body>
+</html>
+
