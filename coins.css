@@ -1,10 +1,17 @@
 body {
-background: green;
+ background: green;
+}
+
+.clickable {
+ width: 120px;
+ height: 40px;
+ background: #bbffbb;
+ border: 4px solid #11bb88;
 }
 
 .pott {
- width: 40%; 
- height: 40%; 
+ width: 40%;
+ height: 40%;
  background: grey;
  position: absolute;
  left: 30%;
@@ -12,15 +19,30 @@ background: green;
 }
   
 .coin { 
- width: 80px; 
- height: 10px; 
- background: red; 
- border: 2px dotted black;
+ width: 30px;
+ height: 9px;
+ border: 10px dotted #ff4444;
  position: absolute;
+ }
+ .coin[amount='1'] {
+ background: yellow;
+ border: 2px dotted #eeeeee;
+ }
+ .coin[amount='2'] {
+ background: #dd3311;
+ border: 2px dotted red;
+ }
+ .coin[amount='5'] {
+ background: blue;
+ border: 2px dotted #1111dd;
+ }
+ .coin[amount='10'] {
+ background: black;
+ border: 2px dotted #666666;
  }
  
 .ablage { 
- width: 20%; 
+ width: 20%;
  height: 20%;
  border: 1px solid black;
  background: aqua;
