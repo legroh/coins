@@ -12,65 +12,84 @@
 
 <script>
 
+	var chipsValues = new Array(1, 2, 5, 10);
 	var players = 4;
 	var turn = -1;
 	
 	var nextPlayer = function() {
 		turn += 1;
 		turn %= players;
+		
+		// repaint homefield-marker
 		$(".ablage").css("border", "");
 		$(".ablage").eq(turn).css("border", "3px dotted blue");
+		
+		// repaint draggable-property
+		$(".coin[owner!=" + turn + "]").draggable( "option", "disabled", true );
+		$(".coin[owner =" + turn + "]").draggable( "option", "disabled", false );
+		
 	}
 	
-	var initField = function()  { 
-		
-		for (var player = 0; player < players; player++) {
-		
-			var ablage = $('<div/>', { class: 'ablage' 
-				, owner: player
-			} );
-			ablage.appendTo("body");
-
-		
-			for (var st = 0; st < 8; st++) {
-				var coin = $('<div/>', { class: 'coin' 
-					, owner: player
-				} );	
-				coin.appendTo("body");
+	var generateUniverse = function()  { 
+	
+		// pott
+		$('<div/>', { class: 'pott' } ).appendTo("body");
+		$(".pott").droppable({
+			drop: function( event, ui ) {
+				$(this).addClass( "ui-state-highlight" ).html( "Dropped!" );
 			}
+		});		
+		
+		// homefields
+		for (var player = 0; player < players; player++) {
+			$('<div/>', { class: 'ablage', owner: player } ).appendTo("body");
 		}
-
 		$(".ablage").each(function(i) {
 			$(this).append( i+1 );
 			$(this).css("left", ((i*25)+2.5)+"%");
 		});
-		
-		$(".coin").draggable({revert: 'invalid'});
-		$(".pott").droppable();
+
+		// coins
+		for (var player = 0; player < players; player++) {
+			for (var i = 0; i < chipsValues.length; i++) {
+				for (var j = 1; j < 10; j++) {
+					var coin = $('<div/>', { class: 'coin', owner: player, amount: chipsValues[i]} );
+					coin.appendTo("body");
+				}
+			}
+		}
+		$(".coin").draggable({ disabled: true, revert: 'invalid' });
+
+		// next-button
+		$('<div/>', {id: 'weiter',text: 'weiter', onClick: 'nextPlayer()', class: 'clickable' }).appendTo($('body'));
 	}
 
-	var paintField = function() {
+	
+	// ebay, immoscou, Tel.Augusta, KabelDeut., comdirect, 
+	
+	
+	var replaceChips = function() {
 		for (var player = 0; player < players; player++) {
-			$(".coin[owner=" + player + "]").each(function(i) {
-				$(this).css("bottom", (i*10 + Math.floor(i/5)*6 +24) + "px");
-				$(this).css("left", (( player )*25+10) + "%");
-			});
+			for (var j = 0; j < chipsValues.length; j++) {
+				$(".coin[owner=" + player +"][amount=" + chipsValues[j] + "]").each(function(i) {
+					$(this).css("bottom", (i*10 + Math.floor(i/5)*6 +24) + "px");
+					$(this).css("left", ($(this).attr("owner")*25 + chipsValues.indexOf(parseInt($(this).attr("amount")))*3 + 4) + "%");
+				});
+			}
 		}	
 	}
 
 	$(document).ready(function() {	
-		initField();
-		paintField();
+		generateUniverse();
+		replaceChips();
 		nextPlayer();
 	});
+	
 	
 </script>
 
 </head>
-<body>
-
-<div class="pott"></div>
-
-</body>
+<body></body>
 </html>
+
 
