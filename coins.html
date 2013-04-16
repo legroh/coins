@@ -13,21 +13,68 @@
 <script>
 
 	var chipsValues = new Array(1, 2, 5, 10);
-	var players = 4;
-	var turn = -1;
+	var player = new Array();
+	var geber = 0; // wer eröffnet die Runde.
+	var turn = -1; // wer is dranne.
+	
+	function newPlayer() {  //Konstrukt
+		this.input = 0;
+	}
 	
 	var nextPlayer = function() {
 		turn += 1;
-		turn %= players;
+		turn %= player.length;
+		
+		if (turn == geber) {
+			volleRunde();
+		}
 		
 		// repaint homefield-marker
-		$(".ablage").css("border", "");
-		$(".ablage").eq(turn).css("border", "3px dotted blue");
+		$(".ablage[owner!=" + turn + "]").removeClass("myTurn");
+		$(".ablage[owner =" + turn + "]").addClass("myTurn");
 		
 		// repaint draggable-property
-		$(".coin[owner!=" + turn + "]").draggable( "option", "disabled", true );
 		$(".coin[owner =" + turn + "]").draggable( "option", "disabled", false );
+		$(".coin[owner!=" + turn + "]").draggable( "option", "disabled", true );
+	}
+	
+	var volleRunde = function() {
+		if (wurdeErhoeht) {
+			alert('noch ne'); 
+			return; 
+		}
+		alert('kasse');
+		selectWinner();
 		
+	}	
+	
+	var wurdeErhoeht = function() {
+		for (var i=1; i < player.length; i++){
+			if (player[0].input != player[i].input) {
+				return false;
+			}
+		}
+		alert('nur bei true');
+		return true;
+	}
+	
+	var selectWinner = function() {
+		$("body").addClass("whoGetsThePott");
+		$(".ablage").droppable({
+			drop: function(event, ui) {
+				$(this).html( "Dropped" );
+				$(".coin.inPott").attr("owner", 0);
+				$(".coin").removeClass("inPott");
+				$("body").removeClass("whoGetsThePott");
+			}
+		});
+		$(".ablage").bind("mouseover", function() {
+			this.addClass("gewinner");
+		});
+		$(".ablage").bind("mouseout", function() {
+			this.removeClass("gewinner");
+		});
+		$(".pott").dragable({});
 	}
 	
 	var generateUniverse = function()  { 
@@ -35,14 +82,17 @@
 		// pott
 		$('<div/>', { class: 'pott' } ).appendTo("body");
 		$(".pott").droppable({
-			drop: function( event, ui ) {
-				$(this).addClass( "ui-state-highlight" ).html( "Dropped!" );
+			drop: function(event, ui) { 
+				$(this).addClass( "ui-state-highlight" ).html( "Dropped" );
+				ui.addClass("inPott").html("zack");
+				player[turn].input += 5;
+				$("#weiter").html(player[turn].input);
 			}
 		});		
 		
 		// homefields
-		for (var player = 0; player < players; player++) {
-			$('<div/>', { class: 'ablage', owner: player } ).appendTo("body");
+		for (var p = 0; p < player.length; p++) {
+			$('<div/>', { class: 'ablage', owner: p } ).appendTo("body");
 		}
 		$(".ablage").each(function(i) {
 			$(this).append( i+1 );
@@ -50,10 +100,10 @@
 		});
 
 		// coins
-		for (var player = 0; player < players; player++) {
+		for (var p = 0; p < player.length; p++) {
 			for (var i = 0; i < chipsValues.length; i++) {
 				for (var j = 1; j < 10; j++) {
-					var coin = $('<div/>', { class: 'coin', owner: player, amount: chipsValues[i]} );
+					var coin = $('<div/>', { class: 'coin', owner: p, amount: chipsValues[i]} );
 					coin.appendTo("body");
 				}
 			}
@@ -69,17 +119,26 @@
 	
 	
 	var replaceChips = function() {
-		for (var player = 0; player < players; player++) {
+		var fromBottom;
+		var fromLeft;
+		for (var p = 0; p < player.length; p++) {
 			for (var j = 0; j < chipsValues.length; j++) {
-				$(".coin[owner=" + player +"][amount=" + chipsValues[j] + "]").each(function(i) {
-					$(this).css("bottom", (i*10 + Math.floor(i/5)*6 +24) + "px");
-					$(this).css("left", ($(this).attr("owner")*25 + chipsValues.indexOf(parseInt($(this).attr("amount")))*3 + 4) + "%");
+				$(".coin[owner=" + p +"][amount=" + chipsValues[j] + "]").each(function(i) {
+					fromBottom = (i*10 + Math.floor(i/5)*6 +24);
+					fromLeft = ($(this).attr("owner")*25 + chipsValues.indexOf(parseInt($(this).attr("amount")))*3 + 4);
+					$(this).css("bottom", fromBottom + "px");
+					$(this).css("left", fromLeft + "%");
+					//$(this).animate({ bottom: fromBottom + "px"; left: fromLeft + "%"; });
 				});
 			}
 		}	
 	}
-
-	$(document).ready(function() {	
+	
+	$(document).ready(function() {
+		for (var i = 0; i < 3; i++) {
+			player[i] = new newPlayer();
+		}
+	
 		generateUniverse();
 		replaceChips();
 		nextPlayer();
