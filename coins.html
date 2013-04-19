@@ -14,19 +14,33 @@
 
 	var chipsValues = new Array(1, 2, 5, 10);
 	var player = new Array();
-	var geber = 0; // wer eröffnet die Runde.
-	var turn = -1; // wer is dranne.
+	var geber = -1; 
+	var turn; 
 	
 	function newPlayer() {  //Konstrukt
-		this.input = 0;
+		//this.input = 0;
+	}
+	
+	var nextMatch = function() {
+		replaceCoins();
+		geber = following(geber, 1); 
+		autoBet(following(geber, 1), 2);
+		autoBet(following(geber, 2), 1);
+		turn = geber ; //following(geber, (-1)); // inc later
+		nextPlayer();
+	}
+	
+	var following = function(pos, step) {
+		pos += step;
+		return pos %= player.length;
 	}
 	
 	var nextPlayer = function() {
-		turn += 1;
-		turn %= player.length;
+		
+		turn = following(turn, 1);
 		
 		if (turn == geber) {
-			volleRunde();
+			nextRound();
 		}
 		
 		// repaint homefield-marker
@@ -38,59 +52,68 @@
 		$(".coin[owner!=" + turn + "]").draggable( "option", "disabled", true );
 	}
 	
-	var volleRunde = function() {
-		if (wurdeErhoeht) {
-			alert('noch ne'); 
-			return; 
+	var nextRound = function() {
+		var amounts = new Array();
+		$("body").html('');
+		for (var i=0; i < player.length; i++) {
+			amounts[i] = calcTotalBet(i);
+			$("body").append(i + ".) in: " + amounts[i]) + "</br>";
 		}
-		alert('kasse');
-		selectWinner();
-		
-	}	
-	
-	var wurdeErhoeht = function() {
-		for (var i=1; i < player.length; i++){
-			if (player[0].input != player[i].input) {
-				return false;
+		for (var i=1; i < player.length; i++) {
+			if (amounts[0] != amounts[i]) {
+				return;
 			}
 		}
-		alert('nur bei true');
-		return true;
+		if (amounts[0] == 0) {
+			return;
+		}
+		selectWinnerStart();
 	}
 	
-	var selectWinner = function() {
+	var calcTotalBet = function(player) {
+		var sum = 0;
+		$(".coin.inPott[owner="+player+"]").each( function() {
+			var wert = $(this).amount;
+			sum += wert;
+		});
+		return sum;
+	}
+	
+	
+	var selectWinnerStart = function() {
 		$("body").addClass("whoGetsThePott");
-		$(".ablage").droppable({
-			drop: function(event, ui) {
-				$(this).html( "Dropped" );
-				$(".coin.inPott").attr("owner", 0);
-				$(".coin").removeClass("inPott");
-				$("body").removeClass("whoGetsThePott");
-			}
-		});
-		$(".ablage").bind("mouseover", function() {
-			this.addClass("gewinner");
-		});
-		$(".ablage").bind("mouseout", function() {
-			this.removeClass("gewinner");
-		});
-		$(".pott").dragable({});
+		$(".clickable").addClass("grau");
+		$(".pott").draggable( "option", "disabled", false );
+		$(".ablage").droppable( "option", "disabled", false );
+	}
+	
+	var selectWinnerDone = function(event, ui) {
+		$("body").removeClass("whoGetsThePott");
+		$(".clickable").removeClass("grau");
+		$(".pott").draggable( "option", "disabled", true );
+		$(".ablage").droppable( "option", "disabled", true );
+		$(".pott").html('dings');
+		$(".coin.inPott").attr("owner", 0);
+		$(".coin").removeClass("inPott");
+		nextMatch();
 	}
 	
 	var generateUniverse = function()  { 
 	
 		// pott
 		$('<div/>', { class: 'pott' } ).appendTo("body");
+		$(".pott").draggable({ disabled: true, revert: true, cursor: 'move', opacity: 0.45 });
 		$(".pott").droppable({
+			disabled: false,
 			drop: function(event, ui) { 
-				$(this).addClass( "ui-state-highlight" ).html( "Dropped" );
-				ui.addClass("inPott").html("zack");
-				player[turn].input += 5;
-				$("#weiter").html(player[turn].input);
+				// grundsätzlich Prüfung ob abgelegtes COIN nicht schon in Pott war.
+				$(this).html("Dropped");
+				//$(this).addClass("ui-state-highlight").html("Dropped");  // schönes chaining
+				handleBet($(ui.draggable));
 			}
 		});		
 		
-		// homefields
+		// ablagen
 		for (var p = 0; p < player.length; p++) {
 			$('<div/>', { class: 'ablage', owner: p } ).appendTo("body");
 		}
@@ -98,11 +121,14 @@
 			$(this).append( i+1 );
 			$(this).css("left", ((i*25)+2.5)+"%");
 		});
+		$(".ablage").droppable({
+			drop: function(event, ui) { selectWinnerDone(event, ui); }
+		});
 
 		// coins
 		for (var p = 0; p < player.length; p++) {
 			for (var i = 0; i < chipsValues.length; i++) {
-				for (var j = 1; j < 10; j++) {
+				for (var j = 1; j < 2; j++) {
 					var coin = $('<div/>', { class: 'coin', owner: p, amount: chipsValues[i]} );
 					coin.appendTo("body");
 				}
@@ -114,24 +140,38 @@
 		$('<div/>', {id: 'weiter',text: 'weiter', onClick: 'nextPlayer()', class: 'clickable' }).appendTo($('body'));
 	}
 
+	// ebay, Tel.Augusta, KabelDeut., comdirect, gentz, kindersitz, immoscou, moped
 	
-	// ebay, immoscou, Tel.Augusta, KabelDeut., comdirect, 
-	
-	
-	var replaceChips = function() {
-		var fromBottom;
-		var fromLeft;
+	var replaceCoins = function() {
+		var toBottom;
+		var toLeft;
 		for (var p = 0; p < player.length; p++) {
 			for (var j = 0; j < chipsValues.length; j++) {
 				$(".coin[owner=" + p +"][amount=" + chipsValues[j] + "]").each(function(i) {
-					fromBottom = (i*10 + Math.floor(i/5)*6 +24);
-					fromLeft = ($(this).attr("owner")*25 + chipsValues.indexOf(parseInt($(this).attr("amount")))*3 + 4);
-					$(this).css("bottom", fromBottom + "px");
-					$(this).css("left", fromLeft + "%");
-					//$(this).animate({ bottom: fromBottom + "px"; left: fromLeft + "%"; });
+					toBottom = (i*10 + Math.floor(i/5)*6 +24) + "px";
+					toLeft = ($(this).attr("owner")*25 + chipsValues.indexOf(parseInt($(this).attr("amount")))*3 + 4) + "%";
+					autoMove($(this), toBottom, toLeft);
 				});
 			}
 		}	
+	}
+	
+	var autoMove = function(coin, bottomStr, leftStr) {
+		//coin.css("bottom", bottomStr + "px");
+		//coin.css("left", leftStr + "%");
+		coin.css("top", 'auto');
+		coin.animate({ bottom: bottomStr , left: leftStr });
+	}
+	
+	var autoBet = function(player, betrag) {
+		var coin = $(".coin[owner=" + player + "][amount=" + betrag + "]").first();
+		autoMove(coin, '50%', (8*player+34)+"%" );
+		handleBet(coin);
+	}
+	
+	var handleBet = function(coin) {
+		coin.addClass("inPott");
+		//player[turn].input += 5;
 	}
 	
 	$(document).ready(function() {
@@ -140,8 +180,7 @@
 		}
 	
 		generateUniverse();
-		replaceChips();
-		nextPlayer();
+		nextMatch();
 	});
 	
 	
