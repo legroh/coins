@@ -1,5 +1,5 @@
 body {
- /* background: green; */
+ background: green; 
 }
 body.whoGetsThePott {
  background: #333355;
@@ -67,37 +67,8 @@ body.whoGetsThePott {
  border: 3px dotted blue;
 }
 
+.ablage[state='passed'] { 
+ opacity: 0.25;
+}
 
-/*
 
-select SP.ANSPRNR, SUBSTR(A.VTNRVOLL, 1, 2) || SUBSTR(A.VTNRVOLL, 4,7) AS vtnr, V.VTNRNAME,
-    SUM(DECODE( fktgruppe, NULL, 1, 0))  ohne_Zuordnung,
-    SUM(DECODE( fktgruppe, 0, 1, 0)) Eigenbearbeitung,
-    SUM(CASE WHEN fktgruppe > 0 THEN 1 ELSE 0 END) Outbound,
-    count(*) Gesamt
-from AO_Zuordnungen z
-right join AO_AUFTRAG_OBNRVOLL a on Z.AUFTNR = A.AUFTNR
- join AO_ANSPRACHEN sp on A.ANSPRID = SP.ANSPRID
- join AO_VERTRETER v on v.vtnrvoll = a.vtnrvoll
-where A.ANSPRID =  1294278
-and A.GUELT = 'J'
-group by SP.ANSPRNR, A.VTNRVOLL,  V.VTNRNAME
-order by 2
-;
-
-select SP.ANSPRNR, SUBSTR(A.SVTNRVOLL, 1, 2) || SUBSTR(A.SVTNRVOLL, 4,7) AS svtnr, V.SVTNRNAME,
-    SUM(DECODE( fktgruppe, NULL, 1, 0))  ohne_Zuordnung,
-    SUM(DECODE( fktgruppe, 0, 1, 0)) Eigenbearbeitung,
-    SUM(CASE WHEN fktgruppe > 0 THEN 1 ELSE 0 END) Outbound,
-    count(*) Gesamt
-from AO_Zuordnungen z
-right join AO_AUFTRAG_OBNRVOLL a on Z.AUFTNR = A.AUFTNR
-join AO_ANSPRACHEN sp on A.ANSPRID = SP.ANSPRID
-join ( select distinct svtnrvoll, svtnrname from AO_VERTRETER) v on v.svtnrvoll = a.svtnrvoll
-where A.ANSPRID =  1294278
-and A.GUELT = 'J'
-group by SP.ANSPRNR, A.SVTNRVOLL,  V.SVTNRNAME
-order by 2
-;
-
-*/
