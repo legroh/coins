@@ -14,6 +14,8 @@
 <script>
 
 	var chipsValues = new Array(1, 2, 5, 10);
+	var roundStages = new Array('Pre-Flop', 'Pre-Turn', 'Pre-River', 'Pre-Showdown');
+	var roundStage; // Pointer auf die Aktuelle Stage.
 	var player = new Array();
 	var geber = -1; 
 	var turn; 
@@ -23,6 +25,8 @@
 	}
 	
 	var nextMatch = function() {
+		roundStage = 0;
+		$(".ablage").attr("state", "nix");
 		replaceCoins();
 		geber = following(geber, 1);
 		$(".ablage[owner="+ following(geber, 1) + "]").html("BB");
@@ -39,28 +43,35 @@
 	}
 	
 	var nextPlayer = function() {
-		
-		turn = following(turn, 1);
-		
-		if (turn == geber) {
-			nextRound();
-		}
+	
+		var startNextRound = false;
+	
+		// Vorbedingung: noch min. 2 nicht gepasst.
+		do {
+			if (turn == geber) {
+				startNextRound = true;
+			}
+			turn = following(turn, 1);
+		} while ( $(".ablage[owner ="+ turn +"]").attr("state") == "passed" );
 		
 		// repaint homefield-marker
-		$(".ablage[owner!=" + turn + "]").removeClass("myTurn");
-		$(".ablage[owner =" + turn + "]").addClass("myTurn");
+		$(".ablage[owner!="+ turn +"]").removeClass("myTurn");
+		$(".ablage[owner ="+ turn +"]").addClass("myTurn");
 		
 		// repaint draggable-property
 		$(".coin").draggable( "option", "disabled", true );
 		$(".coin").filter("[owner ="+ turn +"]").not(".inPott").draggable( "option", "disabled", false );
+		
+		if (startNextRound == true) {
+			nextRound();
+		}
 	}
 	
 	var nextRound = function() {
 		var amounts = [0, 0, 0, 0, 0];
-		$("#infoboard").html('');
 		for (var i=0; i < player.length; i++) {
-			amounts[i] = calcTotalBet(i);
-			$("#infoboard").append(i + ".) in: " + amounts[i] + "<br/>");
+			amounts[i] = checkPott(i);
+			checkCash(i);
 		}
 		for (var i=1; i < player.length; i++) {
 			if (amounts[0] != amounts[i]) {
@@ -73,22 +84,34 @@
 		selectWinnerStart();
 	}
 	
-	var calcTotalBet = function(player) {
+	var checkPott = function(player) {
 		var sum = 0;
 		$(".coin.inPott[owner="+player+"]").each( function() {
 			//var wert = $(this).amount;
 			var wert = 1;
 			sum += wert;
 		});
+		$("#asche_cash td[owner = " +player+ "]").html(sum);
 		return sum;
 	}
-	
+
+	var checkCash = function(player) {
+		var sum = 0;
+		$(".coin[owner="+player+"]").filter(".pott").each( function() {
+			//var wert = $(this).amount;
+			var wert = 1;
+			sum += wert;
+		});
+		$("#asche_cash td[owner = " +player+ "]").html(sum);
+		return sum;
+	}
 	
 	var selectWinnerStart = function() {
 		$("body").addClass("whoGetsThePott");
 		$(".clickable").addClass("grau");
 		$(".pott").draggable( "option", "disabled", false );
-		$(".ablage").droppable( "option", "disabled", false );
+		$(".ablage[state!='passed']").droppable( "option", "disabled", false );
+		$(".ablage[state='passed']").addClass("myTurn");
 	}
 	
 	var selectWinnerDone = function(event, ui) {
@@ -97,7 +120,8 @@
 		$(".pott").draggable( "option", "disabled", true );
 		$(".ablage").droppable( "option", "disabled", true );
 		$(".pott").html('dings');
-		$(".coin.inPott").attr("owner", 0);
+		var winner = $(ui.draggable).attr("owner");
+		$(".coin.inPott").attr("owner", 2);
 		$(".coin").removeClass("inPott");
 		nextMatch();
 	}
@@ -110,8 +134,8 @@
 		$(".pott").droppable({
 			disabled: false,
 			drop: function(event, ui) { 
-				// grundsätzlich Prüfung ob abgelegtes COIN nicht schon in Pott war.
-				//$(this).addClass("ui-state-highlight").html("Dropped");  // schönes chaining
+				// grundsÃ¤tzlich PrÃ¼fung ob abgelegtes COIN nicht schon in Pott war.
+				//$(this).addClass("ui-state-highlight").html("Dropped");  // schÃ¶nes chaining
 				handleBet($(ui.draggable));
 			}
 		});		
@@ -119,6 +143,8 @@
 		// ablagen
 		for (var p = 0; p < player.length; p++) {
 			$('<div/>', { class: 'ablage', owner: p } ).appendTo("body");
+			$('<td/>', { owner: p, align: 'center' } ).appendTo("#asche_cash");
+			$('<td/>', { owner: p, align: 'center' } ).appendTo("#asche_pott");
 		}
 		$(".ablage").each(function(i) {
 			$(this).append( i+1 );
@@ -139,8 +165,20 @@
 		}
 		$(".coin").draggable({ disabled: true, revert: 'invalid' });
 
-		// next-button
-		$('<div/>', {id: 'weiter',text: 'weiter', onClick: 'nextPlayer()', class: 'clickable' }).appendTo($('body'));
+		// buttons
+		$('<div/>', {id: 'bet',text: 'weiter', onClick: 'nextPlayer()', class: 'clickable' }).appendTo($('body'));
+		$('<div/>', {id: 'pass',text: 'passe', onClick: 'pass()', class: 'clickable' }).appendTo($('body'));
+		$('<div/>', {id: 'check',text: 'check', onClick: 'nextPlayer()', class: 'clickable' }).appendTo($('body'));
+	}
+	
+	var pass = function() {
+		$(".ablage[owner = " + turn + "]").attr("state", "passed");
+		var nochDabei = $(".ablage[state!='passed']").length;
+		if (nochDabei > 1) {
+			nextPlayer();
+		} else {
+			selectWinnerStart();
+		}
 	}
 
 	// ebay, Tel.Augusta, KabelDeut., comdirect, gentz, kindersitz, immoscou, moped, Steinhagen 4er-Karte
@@ -190,7 +228,18 @@
 </script>
 
 </head>
-<body><div id="infoboard"/></body>
+<body>
+<div id="infoboard" height="110px">
+Stage: <span id="info_stage"/>
+</br>
+Cash: <table width='15%'><tr id="asche_cash"/></table>
+Pott: <table width='15%'><tr id="asche_pott"/></table>
+</br>
+</br>
+</br>
+</br>
+</div>
+</body>
 </html>
 
 
